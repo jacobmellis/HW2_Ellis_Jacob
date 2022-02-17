@@ -1,0 +1,214 @@
+---
+title: "HW2_Ellis_Jacob"
+author: "Jacob Ellis"
+date: "2/16/2022"
+output: html_document
+knit: (function(input_file, encoding) {
+  out_dir <- 'docs';
+  rmarkdown::render(input_file,
+ encoding=encoding,
+ output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
+---
+
+I plotted the distribution of track and field Olympic medals awarded through 2016 from the top five medal producing countries (Great Britain, Germany, Kenya, Russia, and the United States). I looked at both gold medals exclusively and overall medals, and also considered cumulative awards versus medals awarded in each Olympic Games. The goal of these plots is to show how the trends for different countries changed in the last century plus; for example, Kenya and Russia did not win any medals for many decades, then became rather prolific, whereas Germany hit its peak in the '60s, '70s and '80s (the German phenomenon is due to a combination of East Germany and West Germany each sending a team and likely state sponsored doping from the East German government).
+
+I utilized subplots in Plotly with common X axes so it was more clear what the trends were. This also allowed 2 range sliders to be utilized so the viewer can zoom in to a era of interest in both the cumulative and "per Games" graphs simultaneously. I let values show on each line when hovered over, but opted to limit it only to one line at a time (as opposed to all five) so as not to overwhelm the viewer. However, it can be selected in the top right corner that each country should be compared together, which helps visualize the differences. No legend was provided, as it would have been redundant given the hover labels that were included (the legend also showed up four times when it was included - once for each graph - and I was unable to eliminate the duplicates).
+
+The data came from Kaggle. Below is all the data cleaning to prepare for a plotly plot.
+```{r, message = FALSE}
+# Load libraries that may be needed
+library(ggplot2)
+library(htmlwidgets)
+library(plotly)
+library(tidyr)
+library(dplyr)
+library(readr)
+library(viridis)
+library(ggthemes)
+```
+
+```{r setup, include=FALSE}
+#reading in the data
+medals <- read.csv("olympic_medals.csv")
+
+#eliminating irrelevant variables, combing for entry errors
+medals2 <- subset(medals, select = c(1, 2, 4, 5, 7))
+#unique(medals2$Gender)
+#which(medals2$Gender == "+0.1")
+#which(medals2$Gender == "-0.9")
+#which(medals2$Gender == "+0.6")
+#medals2[c(156, 158, 160, 320, 322, 324, 1664, 1666, 1668, 1793, 1795, 1797),]
+medals3 <- medals2[-c(156, 158, 160, 320, 322, 324, 1664, 1666, 1668, 1793, 1795, 1797),]
+#unique(medals3$Gender)
+#unique(medals3$Event)
+#unique(medals3$Year)
+#unique(medals3$Medal)
+#unique(medals3$Nationality)
+#NO OTHER UNEXPECTED VALUES
+
+#fixing 2016 10k
+medals3[1,]$Nationality <- "GBR"
+
+medals4 <- medals3
+#changing USSR competitors to Russia
+medals4[medals4$Nationality == "URS",]$Nationality <- "RUS"
+#changing all iterations of German teams to GER
+medals4[medals4$Nationality == "EUA",]$Nationality <- "GER"
+medals4[medals4$Nationality == "GDR",]$Nationality <- "GER"
+medals4[medals4$Nationality == "FRG",]$Nationality <- "GER"
+sort(table(medals4$Nationality), decreasing = TRUE)
+
+#pulling top 5 medal countries
+top5 <- sort(c(which(medals4$Nationality == "USA"), which(medals4$Nationality == "GER"), which(medals4$Nationality == "RUS"), which(medals4$Nationality == "GBR"), which(medals4$Nationality == "KEN")))
+medals5 <- medals4[top5, ]
+medals5 <- medals5[order(medals5$Year),]
+rownames(medals5) <- NULL
+medals6 <- subset(medals5, select = c(3, 4, 5))
+
+#creating new dataframe that considers number of medals per Games
+years <- rep(unique(medals6$Year), times = 5)
+nats <- sort(rep(unique(medals6$Nationality), times = length(unique(medals6$Year))))
+count <- numeric(length = length(nats))
+cumul <- numeric(length = length(nats))
+g_count <- numeric(length = length(nats))
+g_cumul <- numeric(length = length(nats))
+
+medals7 <- data.frame(years, nats, count, cumul, g_count, g_cumul)
+oly_years <- years[1:28]
+i <- 1896; j <- 1
+for(i in oly_years){
+     medals7$count[j] <- length(which((medals6$Year == i) & (medals6$Nationality == "GBR")))
+     medals7$cumul[j] <- sum(medals7$count[1:j])
+     medals7$g_count[j] <- length(which((medals6$Year == i) & (medals6$Nationality == "GBR") & medals6$Medal == "G"))
+     medals7$g_cumul[j] <- sum(medals7$g_count[1:j])     
+     j <- j + 1
+}
+
+for(i in oly_years){
+     medals7$count[j] <- length(which((medals6$Year == i) & (medals6$Nationality == "GER")))
+     medals7$cumul[j] <- sum(medals7$count[29:j])
+     medals7$g_count[j] <- length(which((medals6$Year == i) & (medals6$Nationality == "GER") & medals6$Medal == "G"))
+     medals7$g_cumul[j] <- sum(medals7$g_count[29:j])   
+     j <- j + 1
+    }
+for(i in oly_years){
+     medals7$count[j] <- length(which((medals6$Year == i) & (medals6$Nationality == "KEN")))
+     medals7$cumul[j] <- sum(medals7$count[57:j])
+     medals7$g_count[j] <- length(which((medals6$Year == i) & (medals6$Nationality == "KEN") & medals6$Medal == "G"))
+     medals7$g_cumul[j] <- sum(medals7$g_count[57:j])   
+     j <- j + 1
+    }
+for(i in oly_years){
+     medals7$count[j] <- length(which((medals6$Year == i) & (medals6$Nationality == "RUS")))
+     medals7$cumul[j] <- sum(medals7$count[85:j])
+     medals7$g_count[j] <- length(which((medals6$Year == i) & (medals6$Nationality == "RUS") & medals6$Medal == "G"))
+     medals7$g_cumul[j] <- sum(medals7$g_count[85:j])   
+     j <- j + 1
+    }
+for(i in oly_years){
+     medals7$count[j] <- length(which((medals6$Year == i) & (medals6$Nationality == "USA")))
+     medals7$cumul[j] <- sum(medals7$count[113:j])
+     medals7$g_count[j] <- length(which((medals6$Year == i) & (medals6$Nationality == "USA") & medals6$Medal == "G"))
+     medals7$g_cumul[j] <- sum(medals7$g_count[113:j])   
+     j <- j + 1
+}
+```
+
+
+
+```{r}
+#font size etc to use for subplot titles
+f <- list(
+  family = "Courier New, monospace",
+  size = 18,
+  color = "black")
+
+#all medal plots
+ply_cumul <- plot_ly(medals7, 
+        x = ~years,
+        y = ~cumul,
+        color = nats,
+        type = 'scatter',
+        mode = 'lines',
+        width = 900, height = 700
+        ) %>%
+  layout(yaxis = list(title = "Cumulative Medals"))
+
+ply_count <- plot_ly(medals7,
+          x = ~years,
+          y = ~count,
+          color = nats,
+          type = 'scatter',
+          mode = 'lines',
+          width = 900, height = 700
+          ) %>%
+  layout(yaxis = list(title = "Medals per Games"))
+
+a <- list(
+  text = "All Medals",
+  font = f,
+  xref = "paper",
+  yref = "paper",
+  yanchor = "bottom",
+  xanchor = "center",
+  align = "center",
+  x = 0.5,
+  y = 1,
+  showarrow = FALSE)
+
+ply_stack <- subplot(list(ply_cumul, ply_count),
+                     nrows = 2,
+                     shareX = TRUE,
+                     titleY = TRUE) %>%
+    layout(annotations = a,
+           showlegend = FALSE) %>%
+    rangeslider()
+
+#Gold medal plots
+ply_cumul_g <- plot_ly(medals7, 
+        x = ~years,
+        y = ~g_cumul,
+        color = nats,
+        type = 'scatter',
+        mode = 'lines',
+        width = 900, height = 700
+        )
+
+ply_count_g <- plot_ly(medals7,
+          x = ~years,
+          y = ~g_count,
+          color = nats,
+          type = 'scatter',
+          mode = 'lines',
+          width = 900, height = 700
+          )
+b <- list(
+  text = "Gold Medals",
+  font = f,
+  xref = "paper",
+  yref = "paper",
+  yanchor = "bottom",
+  xanchor = "center",
+  align = "center",
+  x = 0.5,
+  y = 1,
+  showarrow = FALSE)
+
+ply_stack_g <- subplot(list(ply_cumul_g, ply_count_g),
+                     nrows = 2,
+                     shareX = TRUE,
+                     titleY = FALSE)%>%
+    layout(annotations = b,
+           showlegend = FALSE) %>%
+    rangeslider()
+
+#combining both vertical stacks
+all_ply_stack <- subplot(list(ply_stack, ply_stack_g),
+                         titleY = TRUE) %>%
+         layout(showlegend = FALSE)
+
+all_ply_stack
+```
+
+
+
