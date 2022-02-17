@@ -14,7 +14,7 @@ I plotted the distribution of track and field Olympic medals awarded through 201
 
 I utilized subplots in Plotly with common X axes so it was more clear what the trends were. This also allowed 2 range sliders to be utilized so the viewer can zoom in to a era of interest in both the cumulative and "per Games" graphs simultaneously. I let values show on each line when hovered over, but opted to limit it only to one line at a time (as opposed to all five) so as not to overwhelm the viewer. However, it can be selected in the top right corner that each country should be compared together, which helps visualize the differences. No legend was provided, as it would have been redundant given the hover labels that were included (the legend also showed up four times when it was included - once for each graph - and I was unable to eliminate the duplicates).
 
-The data came from Kaggle. Below is all the data cleaning to prepare for a plotly plot.
+The data came from Kaggle, under the title "Olympic Track and Field Results". It is downloaded as "results.csv" but I renamed it for the sake of clarity. Below is all the data cleaning to prepare for a plotly plot.
 ```{r, message = FALSE}
 # Load libraries that may be needed
 library(ggplot2)
@@ -27,7 +27,7 @@ library(viridis)
 library(ggthemes)
 ```
 
-```{r setup, include=FALSE}
+```{r setup}
 #reading in the data
 medals <- read.csv("olympic_medals.csv")
 
