@@ -27,6 +27,7 @@ library(viridis)
 library(ggthemes)
 ```
 
+
 ```{r setup}
 #reading in the data
 medals <- read.csv("olympic_medals.csv")
@@ -46,7 +47,7 @@ medals3 <- medals2[-c(156, 158, 160, 320, 322, 324, 1664, 1666, 1668, 1793, 1795
 #unique(medals3$Nationality)
 #NO OTHER UNEXPECTED VALUES
 
-#fixing 2016 10k
+#fixing 2016 10k from USA to GBR
 medals3[1,]$Nationality <- "GBR"
 
 medals4 <- medals3
@@ -139,7 +140,7 @@ ply_count <- plot_ly(medals7,
           y = ~count,
           color = nats,
           type = 'scatter',
-          mode = 'lines',
+          mode = 'markers',
           width = 900, height = 700
           ) %>%
   layout(yaxis = list(title = "Medals per Games"))
@@ -179,7 +180,7 @@ ply_count_g <- plot_ly(medals7,
           y = ~g_count,
           color = nats,
           type = 'scatter',
-          mode = 'lines',
+          mode = 'markers',
           width = 900, height = 700
           )
 b <- list(
